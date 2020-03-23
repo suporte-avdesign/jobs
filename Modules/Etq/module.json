@@ -1,0 +1,13 @@
+{
+    "name": "Etq",
+    "alias": "etq",
+    "description": "",
+    "keywords": [],
+    "order": 0,
+    "providers": [
+        "Modules\\Etq\\Providers\\EtqServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}
