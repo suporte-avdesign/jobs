@@ -14,7 +14,9 @@ class EtqEstoqueController extends Controller
      */
     public function index()
     {
-        return view('etq::index');
+        //$data_ref = date('Y-m-d');
+        $data_ref = '2020-03-24';
+        return view('etq::etq_estoque.index', compact('data_ref'));
     }
 
     /**

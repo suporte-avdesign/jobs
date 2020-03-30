@@ -14,7 +14,7 @@ class AddEtqEstoqueDataRefField extends Migration
     public function up()
     {
         Schema::table('etq_estoques', function (Blueprint $table) {
-            $table->string('data_ref')->nullable()->after('total');
+            $table->date('data_ref')->nullable()->after('total');
         });
     }
 

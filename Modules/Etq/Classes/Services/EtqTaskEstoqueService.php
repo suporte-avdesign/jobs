@@ -74,6 +74,13 @@ class EtqTaskEstoqueService
                 $lastFirma = trim(substr($fileLine, 8, 60));
                 $lastFilial = trim(substr($fileLine, 68, 50));
             }
+            //Datd ref
+            $patternData = "/.*([0-9]{2}\/[0-9]{2}\/[0-9]{2}).*/";
+            $successData = preg_match($patternData, $fileLine, $match);
+            if($successData){
+                $lastData = $match[1];
+            }
+
             //Em Estoque
             $patternEstoque = "((\*) (.+?) (\*))";
             $successEstoque = preg_match($patternEstoque, $fileLine, $match);
@@ -98,7 +105,7 @@ class EtqTaskEstoqueService
                 $produto['qtd'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[3]))));
                 $produto['unitario'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[4]))));
                 $produto['total'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[5]))));
-                $produto['data_ref'] = date('d/m/Y');
+                $produto['data_ref'] = $lastData;
 
                 $sum += $produto['total'];
                 array_push($data, $produto);
@@ -109,6 +116,8 @@ class EtqTaskEstoqueService
             if($successTotal){
                 $total = floatval(str_replace(',', '.', str_replace('.', '', substr($fileLine, 112, 19))));
             }
+
+
         }
 
         return $this->checkTotals($data, $total, $sum);
@@ -124,34 +133,37 @@ class EtqTaskEstoqueService
      */
     private function checkTotals($data, $total, $sum)
     {
-        if ((int)$total == (int)$sum) {
+        $vsum = number_format($sum, 2, ',', '.');
+        $vtotal = number_format($total, 2, ',', '.');
+        if ($vsum == $vtotal) {
             return $this->chunkData($data);
         } else {
             throw new \InvalidArgumentException(
                 "Method:checkTotals() - {$data[0]['firma']} - {$data[0]['filial']} - Valores não coincidem:".
-                 " Total: R$ ".number_format($total, 2, ',', '.').
-                 " - Soma: R$ ".number_format($sum, 2, ',', '.')
+                 " Total: R$ ".$vtotal.
+                 " - Soma: R$ ".$vsum
             );
         }
     }
 
     /**
-     * Divide o array em pedaços.
+     * Divide o array em pedaços e salva no banco de dados.
      * O primeiro e último pedaço pode conter menos elementos que o parâmetro size.
      *
      * @param $data
      */
     private function chunkData($data)
     {
-        $products = collect($data);
-        (count($products) <= $this->config->chunk) ? $part = $data : $part = $this->config->chunk;
+        $items = collect($data);
+        $count = $items->count();
+        ($count <= $this->config->chunk) ? $part = $data : $part = $this->config->chunk;
 
-        foreach ($products->chunk($part) as $chunk) {
+        $chunks = $items->chunk((int)$part);
+        $chunks->toArray();
+        foreach ($chunks as $chunk) {
             foreach ($chunk as $product) {
                 $this->model->create($product);
-                //Tests Local: memory/ Log
-                //$memory = $this->handleFiles->formatBytes(memory_get_peak_usage());
-                //\Log::info("Código: {$product['codigo']} -  Unid: {$product['unid']} - Qtd:{$product['qtd']} - Unitário:{$product['unitario']} - Total:{$product['total']}");
+                //\Log::info("Data: {$product['data_ref']} -  Código: {$product['codigo']} -  Unid: {$product['unid']} - Qtd:{$product['qtd']} - Unitário:{$product['unitario']} - Total:{$product['total']}");
             }
         }
     }

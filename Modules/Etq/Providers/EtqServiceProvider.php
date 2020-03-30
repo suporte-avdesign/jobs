@@ -4,6 +4,7 @@ namespace Modules\Etq\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Modules\Etq\Console\Commands\Schedule\TaskStockFiles;
 
 class EtqServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,8 @@ class EtqServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(ScheduleServiceProvider::class);
+        $this->commands(TaskStockFiles::class);
     }
 
     /**
@@ -94,12 +97,7 @@ class EtqServiceProvider extends ServiceProvider
         }
     }
 
-    private function registerCommands()
-    {
-        $this->commands([
-            Modules\Etq\Console\EtqTaskEstoqueCommand::class
-        ]);
-    }
+
 
     /**
      * Get the services provided by the provider.

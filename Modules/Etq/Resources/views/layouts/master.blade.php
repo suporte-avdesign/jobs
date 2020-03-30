@@ -1,19 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Module Etq</title>
+@extends('layouts.main')
 
-       {{-- Laravel Mix - CSS File --}}
-       {{-- <link rel="stylesheet" href="{{ mix('css/etq.css') }}"> --}}
-
-    </head>
-    <body>
-        @yield('content')
-
-        {{-- Laravel Mix - JS File --}}
-        {{-- <script src="{{ mix('js/etq.js') }}"></script> --}}
-    </body>
-</html>
+@section('topnav')
+    @include('etq::layouts._topnav')
+@endsection
+@section('sidebar')
+    @include('etq::layouts._sidebar')
+@endsection

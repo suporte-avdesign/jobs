@@ -16,7 +16,6 @@ class EtqEstoque extends Model
      */
     //protected $table = 'controladoria.etq_estoque';
 
-    public $timestamps = false;
 
     /**
      * Campos liberados para mass-assignment.
@@ -33,6 +32,7 @@ class EtqEstoque extends Model
         'unid',
         'qtd',
         'unitario',
+        'parcial',
         'total',
         'data_ref'
     ];

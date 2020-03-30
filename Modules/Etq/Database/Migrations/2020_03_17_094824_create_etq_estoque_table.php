@@ -22,9 +22,10 @@ class CreateEtqEstoqueTable extends Migration
             $table->string('codigo');
             $table->string('produto');
             $table->string('unid');
-            $table->float('qtd', 12, 3)->nullable();
-            $table->decimal('unitario', 15, 2)->nullable();
-            $table->decimal('total', 15, 2)->nullable();
+            $table->float('qtd', 11, 4)->nullable();
+            $table->float('unitario', 6, 3)->nullable();
+            $table->float('parcial', 11, 4)->nullable();
+            $table->float('total', 11, 4)->nullable();
             $table->timestamps();
         });
     }

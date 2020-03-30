@@ -15,7 +15,7 @@ trait ConfigHandleFilesTrait
         //Path: local ou (homologação/produção).
         $etq_estoque_origem = ($isPrduction) ? '/data/mnt/controladoria/etq/' : 'modules/Etq/tmp/';
         //$etq_estoque_origem = ($isPrduction) ? '/data/mnt/controladoria/etq/' : '/data/mnt/controladoria/etq/';
-        $etq_estoque_destino = 'modules/Etq/etq_estoque/'.date('d-m-Y');
+        $etq_estoque_destino = 'modules/Etq/etq_estoque/';
         //windows
         //$etq_estoque_local = ($isPrduction) ? 'D:/www/portal-ebba/storage/app' : 'D:/www/portal-ebba/storage/app';
         $etq_estoque_local = ($isPrduction) ? storage_path('app') : storage_path('app');

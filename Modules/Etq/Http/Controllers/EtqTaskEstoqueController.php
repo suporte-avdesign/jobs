@@ -22,7 +22,7 @@ class EtqTaskEstoqueController extends Controller
         $this->config = $this->handleFiles
             ->filesDirectories()
             ->etq_estoque;
-        }
+    }
 
     /**
      * InfoFiles: Retorna os arquivos de um diretório específico.
@@ -37,12 +37,37 @@ class EtqTaskEstoqueController extends Controller
         try{
             \DB::beginTransaction();
             $infoFiles  = $this->handleFiles->getInfoFile($this->config);
-            if ($this->config->copy) {
-                $this->handleFiles->deleteDirectory($this->config->receiver);
-                $this->handleFiles->makeDirectory($this->config->receiver);
+
+            if ($infoFiles && $this->config->copy) {
+                $path = $this->config->receiver. date('d-m-Y');
+                $this->handleFiles->deleteDirectory($path);
+                $this->handleFiles->makeDirectory($path);
             }
 
             $files = $this->handleFiles->searchFiles($this->config, $infoFiles);
+
+            $tasks = $this->taskService->initTasks($files);
+
+            \DB::commit();
+
+        } catch(\Exception $e){
+            \DB::rollback();
+            return $e->getMessage();
+        }
+    }
+
+    public function tasksByDate($date)
+    {
+        try{
+            \DB::beginTransaction();
+            $infoFiles  = $this->handleFiles->getInfoFile($this->config, $date);
+            if ($infoFiles && $this->config->copy) {
+                $path = $this->config->receiver. $date;
+                $this->handleFiles->deleteDirectory($path);
+                $this->handleFiles->makeDirectory($path);
+            }
+
+            $files = $this->handleFiles->searchFiles($this->config, $infoFiles, $date);
 
             $tasks = $this->taskService->initTasks($files);
 

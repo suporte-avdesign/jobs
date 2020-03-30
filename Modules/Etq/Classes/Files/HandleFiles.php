@@ -13,17 +13,20 @@ class HandleFiles
 {
     use ConfigHandleFilesTrait;
 
+
     /**
-     * Criar diretório específico.
+     *  Retorna os arquivos de um diretório específico.
      *
      * @param $config
-     * @throws \Exception
+     * @return mixed
      */
-    public function makeDirectory($path)
+    public function getInfoFile($config, $date = null)
     {
-        $fs = app(FilesFactory::class);
-        if (!is_dir($path))
-            $fs->makeDirectory($path);
+        if ($config->production) {
+            return $this->allFilesDirectory($config, $date);
+        } else {
+            return $this->allFilesStorage($config, $date);
+        }
     }
 
     /**
@@ -40,26 +43,26 @@ class HandleFiles
     }
 
     /**
-     *  Retorna os arquivos de um diretório específico.
+     * Criar diretório específico.
      *
      * @param $config
-     * @return mixed
+     * @throws \Exception
      */
-    public function getInfoFile($config)
+    public function makeDirectory($path)
     {
-        if ($config->production) {
-            return $this->allFilesDirectory($config);
-        } else {
-            return $this->allFilesStorage($config);
-        }
+        $fs = app(FilesFactory::class);
+        if (!is_dir($path))
+            $fs->makeDirectory($path);
     }
+
+
 
     /**
      * Retorna arquivos de um diretório específico fora da estrutura laravel.
      *
      * @param $config
      */
-    public function allFilesDirectory($config)
+    public function allFilesDirectory($config, $date)
     {
         $dir  = $config->origin;
         $data = array();
@@ -70,7 +73,7 @@ class HandleFiles
                 while (($file = readdir($dh)) !== false) {
                     $path = $dir. DIRECTORY_SEPARATOR . $file;
                     $info = pathinfo($path);
-                    $date = date($config->format);
+                    ($date) ? $date = $this->searchDate($date) : $date = date($config->format);
                     if ($info['extension'] == $config->origin_ext) {
                         $info['dirname'] = $config->origin;
                         $dateFile = substr($info['filename'], $config->start, $config->lenght);
@@ -94,25 +97,27 @@ class HandleFiles
      * @param $config
      * @return mixed
      */
-    public function allFilesStorage($config)
+    public function allFilesStorage($config, $date)
     {
-        //$org = str_replace('/', '\\', $config->origin);
         $dir = storage_path('app') . DIRECTORY_SEPARATOR . $config->origin;
         $data = array();
         $files = $this->listFilesPath($config->origin, true);
-        foreach ($files as $file) {
-            $info = pathinfo($file);
-            $date = date($config->format);
-            if ($info['extension'] == $config->origin_ext) {
-                $info['dirname'] = $dir;
-                $dateFile = substr($info['filename'], $config->start, $config->lenght);
-                if ($dateFile == $date) {
-                    $info['size'] = $this->getSize($info);
-                    $info['modified'] = $this->getModified($info);
-                    array_push($data, $info);
+        if ($files) {
+            foreach ($files as $file) {
+                $info = pathinfo($file);
+                ($date) ? $thisDate = $this->searchDate($date) : $thisDate = date($config->format);
+                if ($info['extension'] == $config->origin_ext) {
+                    $info['dirname'] = $dir;
+                    $dateFile = substr($info['filename'], $config->start, $config->lenght);
+                    if ($dateFile == $thisDate) {
+                        $info['size'] = $this->getSize($info);
+                        $info['modified'] = $this->getModified($info);
+                        array_push($data, $info);
+                    }
                 }
             }
         }
+
 
         return json_decode(json_encode($data, FALSE));
     }
@@ -140,7 +145,7 @@ class HandleFiles
      * @param $config
      * @param $info
      */
-    public function searchFiles($config, $info)
+    public function searchFiles($config, $info, $date = null)
     {
         $i=1;
         $files = array();
@@ -154,9 +159,10 @@ class HandleFiles
                     if ($ignore) {
                         if (!$this->searchName($content, $ignore)) {
                             if ($config->copy) {
+                                (!$date) ? $pathDate = date('d-m-Y') : $pathDate = $date;
                                 $name = "{$config->name}{$i}{$config->receiver_ext}";
-                                $this->copyFiles($config, $content, $name);
-                                $files[$i] = "{$config->path}/{$config->receiver}/{$name}";;
+                                $this->copyFiles($config, $content, $pathDate, $name);
+                                $files[$i] = "{$config->path}/{$config->receiver}/{$pathDate}/{$name}";;
                             } else {
                                 $files[$i] = file_get_contents($link);
                             }
@@ -179,11 +185,11 @@ class HandleFiles
      * @param $content
      * @param $path
      */
-    public function copyFiles($config, $content, $name)
+    public function copyFiles($config, $content, $date, $name)
     {
         $fs = app(FilesFactory::class);
         $disk = $fs->disk($config->storage);
-        $path = "{$config->receiver}/{$name}";
+        $path = "{$config->receiver}/{$date}/{$name}";
         if ($disk->exists($path)) {
             $disk->put($path, $content);
         } else {
@@ -284,6 +290,16 @@ class HandleFiles
     {
         return $info['dirname']. DIRECTORY_SEPARATOR . $info['basename'];
     }
+
+    public function searchDate($date)
+    {
+        $arr = explode('-', $date);
+        $d = $arr[0];
+        $m = $arr[1];
+        $y = $arr[2];
+        return $y.$m.$d;
+    }
+
 
     /**
      * Teste memory
