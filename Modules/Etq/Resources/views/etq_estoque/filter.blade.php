@@ -9,17 +9,22 @@
                 <div class="card mb-4">
                     <div class="card-header"><i class="fas fa-file-excel mr-1"></i>Exportar Excel</div>
                     <div class="card-body">
-                        <form id="form-etq-extoque" action="{{route('etq-estoque-companies')}}" onsubmit="return false">
+                        <form id="form-etq-extoque" action="{{route('etq-estoque-filter')}}" onsubmit="return false">
                             @csrf
                             <div class="form-group">
                                 <input type="date" class="form-control" id="data_ref" name="data_ref" value="{{$data_ref}}" placeholder="{{$data_ref}}">
                             </div>
-
-                            @include('etq::etq_estoque.partials._firmas')
-                            @include('etq::etq_estoque.partials._filiais')
-
-                            <div class="form-group text-center">
-                                <button type="button" onclick="etqEstoqueFilterFirma()" class="btn btn-dark">Download</button>
+                                @include('etq::etq_estoque.partials._firmas')
+                                <div id="load_filiais"></div>
+                            <div class="form-group text-center" style="margin-top: 20px">
+                                <button type="button" id="btn-filter-company" onclick="etqStockFilter()" class="btn btn-dark" style="display: none;">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Download
+                                </button>
+                                <button id="btn-load" class="btn btn-dark" type="button" style="display: none">
+                                    <span class="spinner-border spinner-border-sm" aria-hidden="true" disabled></span>
+                                    Aguarde...
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -39,49 +44,51 @@
             </div>
         </footer>
     </div>
-
-
-
 @endsection
 
 @push('scripts')
 <script type='text/javascript'>
     $(document).ready(function(){
-
         $('.change-firma').on('change', function() {
             if(this.checked) {
                 var name = $(this).val(),
-                    key = $(this).attr("data-firma");
-                etqfilterFirma(name);
+                    slug = $(this).attr("data-firma");
+                etqStockLoadFields(name);
             } else {
-                var key = $(this).attr("data-firma");
-                $('#filiais_types-'+key).html('');
+                var slug = $(this).attr("data-firma");
+                $('#'+slug).html('');
+                $('#btn-filter-company').hide();
             }
         })
-        $('.check-firma').click (function () {
-            var firma = $(this).attr('data-firma'),
-                checkedStatus = this.checked;
-            $('#filiais_types .checked-'+firma).each(function () {
-                $(this).prop('checked', checkedStatus);
-            });
-        });
-        $('.check-filial').click (function () {
-            var filial = $(this).attr('data-filial'),
-                checkedStatus = this.checked;
-            $('#filiais_types .check-type-'+filial).each(function () {
-                $(this).prop('checked', checkedStatus);
-            });
-        });
     });
 
-    function etqfilterFirma(name) {
-        var form = $('#form-etq-extoque');
+    function checkFilialAll(firma) {
+        var checkedStatus = $('#filiais-'+firma).prop("checked");
+        $('.filiais_types-'+firma+' .checked-'+firma).each(function () {
+            $(this).prop('checked', checkedStatus);
+        });
+    }
+
+    function checkTypesAll(key) {
+        var checkedStatus = $('#filial-'+key).prop("checked");
+        alert(checkedStatus);
+        $('.type-'+key).each(function () {
+            $(this).prop('checked', checkedStatus);
+        });
+    }
+
+    function etqStockLoadFields(name) {
+        var form = $('#form-etq-extoque'),
+            data_ref = $('input[name="data_ref"]').val();
+            token = $('input[name="_token"]').val();
+
         $.ajax({
-            url: form.attr('action'),
+            url: form.attr('action')+'/load',
             type: 'POST',
             dataType: 'json',
-            data: {firma: name},
+            data: {data_ref: data_ref, firma: name, _token:token},
             beforeSend: function() {
+                isCheckedFilter();
                 $('#empty_filter').hide();
                 $('#empty_filter').html('');
             },
@@ -90,24 +97,38 @@
                     $('#empty_filter').show();
                     $('#empty_filter').html(response.error);
                 }
-                $('#load_firmas').html(response.firmas);
-                $(".check-firma").click(function () {
-                    //changeFiliais(response.filiais, url);
-                });
+                $('#load_filiais').prepend(response.html);
+                //isCheckedFilter();
             },
             error: function(xhr){ // Falta fazer function para tratar os erros.
+                isCheckedFilter();
                 $('#empty_filter').show();
                 $('#empty_filter').html('Error inesperado, atualize o navegador e tente novamente');
             }
         });
-
     }
 
-    function etqEstoqueFilterFirma(){
+    function isCheckedFilter() {
+        var checked=false,
+            btn = $('#btn-filter-company'),
+            load = $('#btn-load');
+        $('.change-firma').each(function(){
+            if($(this).prop("checked"))
+                checked=true
+        });
+        if (!checked) {
+            btn.hide();
+            load.show();
+        } else {
+            btn.show();
+            load.hide();
+        }
+    }
 
+    function etqStockFilter(){
         var form = $('#form-etq-extoque');
         $.ajax({
-            url: form.attr('action'),
+            url: form.attr('action')+'/data',
             type: 'POST',
             dataType: 'json',
             data: form.serialize(),
@@ -131,6 +152,7 @@
             }
         });
     }
+
 </script>
 @endpush
 

@@ -2,12 +2,14 @@
 
 namespace Modules\Etq\Http\Controllers;
 
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Etq\Classes\Exports\EtqEstoqueExport;
+use Modules\Etq\Http\Requests\EtqEstoqueRequest;
 use Modules\Etq\Classes\Services\EtqExcelEstoqueService;
 
 
@@ -23,18 +25,18 @@ class EtqEstoqueExcelController extends Controller
     {
         $this->excelService = $excelService;
         $this->message = array(
-            'date_empty' => 'Não existe movimento de estoque nesta data.'
+            'return_empty' => 'Não existe movimento de estoque nesta data.',
         );
     }
 
     public function filter()
     {
         $data_ref = '2020-03-24';
-        $data = $this->excelService->firmaPorData($data_ref);
-        if (!$data) {
+        $items = $this->excelService->porData($data_ref);
+        if (!$items) {
 
         }
-        return view('etq::etq_estoque.filter', compact('data', 'data_ref'));
+        return view('etq::etq_estoque.filter', compact('items', 'data_ref'));
     }
 
     /**
@@ -43,26 +45,33 @@ class EtqEstoqueExcelController extends Controller
      * @return Response
      */
 
-    public function companiesDate(Request $request)
+    public function loadFirmas(Request $request)
     {
-        $dataForm = $request->all();
-        dd($dataForm);
-        $date = $request->get('data_ref');
-        $data = $this->excelService->firmaPorData($date);
-        if (!$data) {
-
+        //sleep(20);
+        $firma = $request->get('firma');
+        $data_ref = $request->get('data_ref');
+        $slug = Str::slug(str_replace('.', '-', $firma));
+        $items = $this->excelService->firmaPorData($firma, $data_ref);
+        if (!$items) {
+            return $this->responseJson( ['error' => $this->message['return_empty']]);
         }
+
+        $html = view('etq::etq_estoque.ajax._filiais',
+            compact('slug','firma', 'items'))
+            ->render();
+
+        return $this->responseJson(['html' => $html]);
     }
 
 
-    public function branchesDate(Request $request)
+    public function filterData(EtqEstoqueRequest $request)
     {
-        dd($request->all());
+        $dataForm = $request->except(['_token']);
+        dd($dataForm);
     }
 
-    public function responseJson($res)
+    public function responseJson($out)
     {
-        (!is_array($res) ? $out = ['error' => $res] : $out = $res);
         return response()->json($out);
     }
 
