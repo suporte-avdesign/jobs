@@ -1,6 +1,4 @@
 @extends('etq::layouts.master')
-
-
 @section('content')
     <div id="layoutSidenav_content">
         <main>

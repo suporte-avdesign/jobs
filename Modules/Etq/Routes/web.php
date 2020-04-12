@@ -18,10 +18,9 @@ Route::prefix('etq')->group(function() {
     Route::get('etq-estoque/', 'EtqEstoqueController@index' )->name('etq-stock');
     Route::post('etq-estoque-dados', 'EtqEstoqueController@data' )->name('etq-estoque-dados');
 
-    Route::get('etq-estoque/filtrar', 'EtqEstoqueExcelController@filter' )->name('etq-estoque-filter');
-    Route::post('etq-estoque/filtrar/load', 'EtqEstoqueExcelController@loadFirmas' )->name('etq-estoque-load');
-    Route::post('etq-estoque/filtrar/data', 'EtqEstoqueExcelController@filterData' )->name('etq-estoque-data');
-
+    Route::get('etq-estoque/filtrar', 'EtqEstoqueExportController@filter' )->name('etq-estoque-filter');
+    Route::post('etq-estoque/filtrar', 'EtqEstoqueExportController@exportData' )->name('etq-estoque-export');
+    Route::post('etq-estoque/filtrar/firmas', 'EtqEstoqueExportController@loadData' )->name('etq-estoque-load');
 
 
 });

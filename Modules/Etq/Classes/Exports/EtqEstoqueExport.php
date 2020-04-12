@@ -4,27 +4,53 @@
 namespace Modules\Etq\Classes\Exports;
 
 use Modules\Etq\Entities\EtqEstoque;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Modules\Etq\Http\Requests\StockExportRequest;
 
-class EtqEstoqueExport implements FromCollection
+
+class EtqEstoqueExport
 {
-    private $select;
-    private $where;
 
-    public function __construct($where, $select=null)
+
+    /**
+     * @var StockExportRequest
+     */
+    private $request;
+
+    public function __construct(StockExportRequest $request)
     {
-        $this->where = $where;
-        $this->select = $select;
+        $this->request = $request;
     }
 
     public function collection()
     {
-        dd($this->where);
-        if ($this->select) {
-            return EtqEstoque::select()->where($this->where)->get();
-        }
-        return EtqEstoque::where($this->where)->get();
 
+        $firmas = 'BELA ISCHIA ALIMENTOS LTDA,ASTOLFO - MG,EMPRESA BRASILEIRA DE BEBIDAS E ALIM.S/A';
+        $filiais = 'DEPOSITO - RJ,ASTOLFO - MG,DEPOSITO - DF';
+        $categoria = 'ATIVO FIXO,PRODUTO ACABADO,MATERIAL DE CONSUMO';
+        $myCategoria = explode(',', $categoria);
+        $myFirmas = explode(',', $firmas);
+        $myFiliais = explode(',', $filiais);
+        $select = "data_ref,firma,filial,categoria_estoque,codigo,produto,unid,qtd,unitario,total";
+
+        $data = EtqEstoque::select(
+            'data_ref',
+            'firma',
+            'filial',
+            'categoria_estoque',
+            'codigo',
+            'produto',
+            'unid',
+            'qtd',
+            'unitario',
+            'total')
+            ->orderBy('filial', 'desc')
+            ->where('data_ref','24/03/20')
+            ->whereIn('firma', $myFirmas)
+            ->whereIn('filial', $myFiliais)
+            ->whereIn('categoria_estoque', $myCategoria)
+            ->get();
+
+        return $data;
     }
 
 }

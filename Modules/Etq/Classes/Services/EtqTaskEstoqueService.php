@@ -27,8 +27,8 @@ class EtqTaskEstoqueService
      */
     public function initTasks($files)
     {
-        for ($i = 1; $i <= count($files); $i++) {
-            $read[$i] = $this->taskFile($files[$i]);
+        foreach ($files as $file) {
+            $this->taskFile($file);
         }
     }
 
@@ -67,6 +67,13 @@ class EtqTaskEstoqueService
 
         $fileLines = explode(PHP_EOL, $content);
         foreach($fileLines as $fileLine){
+
+            //Data
+            $patternData = "(DT\.Ref\.:)";
+            $successData = preg_match($patternData, $fileLine, $match);
+            if($successData){
+                $lastData = trim(substr($fileLine, 138, 8));
+            }
             //Firma
             $patternFirma = "(^\| FIRMA:)";
             $successFirma = preg_match($patternFirma, $fileLine, $match);
@@ -104,10 +111,10 @@ class EtqTaskEstoqueService
                 $produto['unid'] = trim($value[2]);
                 $produto['qtd'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[3]))));
                 $produto['unitario'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[4]))));
-                $produto['total'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[5]))));
+                $produto['parcial'] = floatval(str_replace(',', '.', str_replace('.', '', trim($value[5]))));
                 $produto['data_ref'] = $lastData;
 
-                $sum += $produto['total'];
+                $sum += $produto['parcial'];
                 array_push($data, $produto);
             }
 

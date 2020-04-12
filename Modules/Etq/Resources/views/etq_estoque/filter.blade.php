@@ -9,23 +9,23 @@
                 <div class="card mb-4">
                     <div class="card-header"><i class="fas fa-file-excel mr-1"></i>Exportar Excel</div>
                     <div class="card-body">
-                        <form id="form-etq-extoque" action="{{route('etq-estoque-filter')}}" onsubmit="return false">
-                            @csrf
+                        @include('etq::etq_estoque.partials._message')
+                        <form id="form-etq-extoque" method="POST" action="{{route('etq-estoque-export')}}">
+
+
+
                             <div class="form-group">
-                                <input type="date" class="form-control" id="data_ref" name="data_ref" value="{{$data_ref}}" placeholder="{{$data_ref}}">
+                                <label for="data_ref">Selecione a data</label><input type="date" class="form-control" id="data_ref" name="data_ref" value="{{$data_ref}}" placeholder="{{$data_ref}}">
                             </div>
                                 @include('etq::etq_estoque.partials._firmas')
                                 <div id="load_filiais"></div>
                             <div class="form-group text-center" style="margin-top: 20px">
-                                <button type="button" id="btn-filter-company" onclick="etqStockFilter()" class="btn btn-dark" style="display: none;">
+                                <button type="submit" class="btn btn-dark">
                                     <i class="fa fa-download" aria-hidden="true"></i>
                                     Download
                                 </button>
-                                <button id="btn-load" class="btn btn-dark" type="button" style="display: none">
-                                    <span class="spinner-border spinner-border-sm" aria-hidden="true" disabled></span>
-                                    Aguarde...
-                                </button>
                             </div>
+                            <div class="hide">@csrf</div>
                         </form>
                     </div>
                 </div>
@@ -48,111 +48,72 @@
 
 @push('scripts')
 <script type='text/javascript'>
-    $(document).ready(function(){
+    $(function() {
+        /**
+         * Carregar filiais de determinada empresas
+         */
         $('.change-firma').on('change', function() {
+            let slug = $(this).attr("data-firma");
             if(this.checked) {
-                var name = $(this).val(),
-                    slug = $(this).attr("data-firma");
+                let name = $(this).val();
                 etqStockLoadFields(name);
             } else {
-                var slug = $(this).attr("data-firma");
                 $('#'+slug).html('');
-                $('#btn-filter-company').hide();
-            }
-        })
-    });
-
-    function checkFilialAll(firma) {
-        var checkedStatus = $('#filiais-'+firma).prop("checked");
-        $('.filiais_types-'+firma+' .checked-'+firma).each(function () {
-            $(this).prop('checked', checkedStatus);
-        });
-    }
-
-    function checkTypesAll(key) {
-        var checkedStatus = $('#filial-'+key).prop("checked");
-        alert(checkedStatus);
-        $('.type-'+key).each(function () {
-            $(this).prop('checked', checkedStatus);
-        });
-    }
-
-    function etqStockLoadFields(name) {
-        var form = $('#form-etq-extoque'),
-            data_ref = $('input[name="data_ref"]').val();
-            token = $('input[name="_token"]').val();
-
-        $.ajax({
-            url: form.attr('action')+'/load',
-            type: 'POST',
-            dataType: 'json',
-            data: {data_ref: data_ref, firma: name, _token:token},
-            beforeSend: function() {
-                isCheckedFilter();
-                $('#empty_filter').hide();
-                $('#empty_filter').html('');
-            },
-            success: function(response){
-                if (response.error) {
-                    $('#empty_filter').show();
-                    $('#empty_filter').html(response.error);
-                }
-                $('#load_filiais').prepend(response.html);
-                //isCheckedFilter();
-            },
-            error: function(xhr){ // Falta fazer function para tratar os erros.
-                isCheckedFilter();
-                $('#empty_filter').show();
-                $('#empty_filter').html('Error inesperado, atualize o navegador e tente novamente');
             }
         });
-    }
 
-    function isCheckedFilter() {
-        var checked=false,
-            btn = $('#btn-filter-company'),
-            load = $('#btn-load');
-        $('.change-firma').each(function(){
-            if($(this).prop("checked"))
-                checked=true
-        });
-        if (!checked) {
-            btn.hide();
-            load.show();
-        } else {
-            btn.show();
-            load.hide();
+        /**
+         * Selecionar todos checkbox de determinada emoresa.
+         * @param firma
+         */
+        checkFilialAll = function(firma) {
+            let checkedStatus = $('#filiais-'+firma).prop("checked");
+            $('.filiais_types-'+firma+' .checked-'+firma).each(function () {
+                $(this).prop('checked', checkedStatus);
+            });
+            return false;
         }
-    }
 
-    function etqStockFilter(){
-        var form = $('#form-etq-extoque');
-        $.ajax({
-            url: form.attr('action')+'/data',
-            type: 'POST',
-            dataType: 'json',
-            data: form.serialize(),
-            beforeSend: function() {
-                $('#empty_filter').hide();
-                $('#empty_filter').html('');
-            },
-            success: function(response){
-                if (response.error) {
-                    $('#empty_filter').show();
-                    $('#empty_filter').html(response.error);
+        /**
+         * Selecionar todos checkbox das categorias da filial.
+         * @param key
+         */
+        checkTypesAll = function(key) {
+            let checkedStatus = $('#filial-'+key).prop("checked");
+            $('.type-'+key).each(function () {
+                $(this).prop('checked', checkedStatus);
+            });
+            return false;
+        }
+
+        /**
+         * Obter filiais e categorias referente a Empresa.
+         * @param name
+         */
+        etqStockLoadFields = function(name) {
+            let form = $('#form-etq-extoque'),
+                load = $('#empty_filter'),
+                data_ref = $('input[name="data_ref"]').val(),
+                token = $('input[name="_token"]').val();
+            $.ajax({
+                url: form.attr('action')+'/firmas',
+                type: 'POST',
+                dataType: 'json',
+                data: {data_ref: data_ref, firma: name, _token:token},
+                beforeSend: function() {
+                    load.hide();
+                    load.html('');
+                },
+                success: function(response){
+                    if (response.error) {
+                        load.show();
+                        load.html(response.error);
+                    }
+                    $('#load_filiais').prepend(response.html);
                 }
-                $('#load_firmas').html(response.firmas);
-                $(".check-firma").click(function () {
-                    //changeFiliais(response.filiais, url);
-                });
-            },
-            error: function(xhr){ // Falta fazer function para tratar os erros.
-                $('#empty_filter').show();
-                $('#empty_filter').html('Error inesperado, atualize o navegador e tente novamente');
-            }
-        });
-    }
-
+            });
+        }
+    });
 </script>
 @endpush
 

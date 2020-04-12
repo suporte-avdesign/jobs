@@ -6,16 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class EtqEstoque extends Model
 {
-    /**
-     * Define qual conexão será utilizada no model.
-     */
-    //protected $connection = 'DW';
-
-    /**
-     * Define o nome da tabela referente ao model.
-     */
-    //protected $table = 'controladoria.etq_estoque';
-
 
     /**
      * Campos liberados para mass-assignment.

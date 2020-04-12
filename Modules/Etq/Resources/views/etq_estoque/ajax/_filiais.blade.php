@@ -18,7 +18,7 @@
                             @foreach($chunks as $type)
                                 <div class="col-3">
                                     <div class="form-check form-check-inline"style="left: 20px">
-                                        <input class="form-check-input checked-{{$slug}} type-{{$i}}" type="checkbox" name="tipo[{{$i}}][{{$key}}][]" value="{{$type->categoria_estoque}}" data-type="{{$loop->index}}" id="type-{{$key}}">
+                                        <input class="form-check-input checked-{{$slug}} type-{{$i}}" type="checkbox" name="tipos[{{$i}}][{{$key}}][]" value="{{$type->categoria_estoque}}" data-type="{{$loop->index}}" id="type-{{$key}}">
                                         <label class="form-check-label" for="type-{{$loop->index}}">{{ucwords(strtolower($type->categoria_estoque))}}</label>
                                     </div>
                                 </div>
